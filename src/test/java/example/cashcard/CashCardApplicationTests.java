@@ -59,6 +59,7 @@ class CashCardApplicationTests {
                 .andExpect(jsonPath("$.owner").value("esuez5"));
     }
 
+    @WithMockUser(username = "sarah1", authorities = {"SCOPE_cashcard:read"})
     @Test
     void shouldReturnAllCashCardsWhenListIsRequested() throws Exception {
         this.mvc.perform(get("/cashcards"))
