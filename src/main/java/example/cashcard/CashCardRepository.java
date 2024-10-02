@@ -17,4 +17,10 @@ public interface CashCardRepository extends CrudRepository<CashCard, Long> {
 
   @Query("select * from cash_card cc where cc.owner = :#{authentication.name}")
   Iterable<CashCard> findAll();
+
+  // NOTE: (best-practice) differ from using findAll function for performing fetch
+  // operations on a database level.
+//  default Iterable<CashCard> findAll() {
+//    throw new UnsupportedOperationException("unsupported, please use findByOwner instead");
+//  }
 }
