@@ -23,8 +23,8 @@ public class CashCardApplication {
 			throws Exception {
 		http
 				.authorizeHttpRequests((authorize) -> authorize
-						.requestMatchers(HttpMethod.GET, "/cashcards/**")
-						.hasAuthority("SCOPE_cashcard:read")
+						.requestMatchers(HttpMethod.GET, "/cashcards/**").hasAuthority("SCOPE_cashcard:read")
+						.requestMatchers("/cashcards/**").hasAuthority("SCOPE_cashcard:write")
 						.anyRequest().authenticated()
 				)
 				.oauth2ResourceServer((oauth2) -> oauth2
