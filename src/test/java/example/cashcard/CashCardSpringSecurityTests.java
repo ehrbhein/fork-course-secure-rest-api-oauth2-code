@@ -62,6 +62,20 @@ public class CashCardSpringSecurityTests {
 				.andExpect(header().string("WWW-Authenticate", containsString("Jwt expired")));
 	}
 
+	@Test
+	void shouldShowAllTokenValidationErrors() throws Exception {
+		String expired = mint((claims) -> claims
+				.audience(List.of("https://wrong"))
+				.issuedAt(Instant.now().minusSeconds(3600))
+				.expiresAt(Instant.now().minusSeconds(3599))
+		);
+		this.mvc.perform(get("/cashcards").header("Authorization", "Bearer " + expired))
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().exists("WWW-Authenticate"))
+				.andExpect(jsonPath("$.errors..description").value(
+						containsInAnyOrder(containsString("Jwt expired"), containsString("aud claim is not valid"))));
+	}
+
 	private String mint() {
 		return mint(consumer -> {});
 	}
