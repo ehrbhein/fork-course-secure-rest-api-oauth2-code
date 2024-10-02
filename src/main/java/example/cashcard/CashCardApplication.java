@@ -7,6 +7,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 
 /**
  * The application entry point
@@ -21,13 +22,15 @@ public class CashCardApplication {
 	SecurityFilterChain appSecurity(HttpSecurity http, AuthenticationEntryPoint entryPoint)
 			throws Exception {
 		http
-			.authorizeHttpRequests((authorize) -> authorize
-				.anyRequest().authenticated()
-			)
-			.oauth2ResourceServer((oauth2) -> oauth2
-				.authenticationEntryPoint(entryPoint)
-				.jwt(Customizer.withDefaults())
-			);
+				.authorizeHttpRequests((authorize) -> authorize
+						.requestMatchers(HttpMethod.GET, "/cashcards/**")
+						.hasAuthority("SCOPE_cashcard:read")
+						.anyRequest().authenticated()
+				)
+				.oauth2ResourceServer((oauth2) -> oauth2
+						.authenticationEntryPoint(entryPoint)
+						.jwt(Customizer.withDefaults())
+				);
 		return http.build();
 	}
 
