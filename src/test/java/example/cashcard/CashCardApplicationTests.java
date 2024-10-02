@@ -1,6 +1,7 @@
 package example.cashcard;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +13,9 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -30,7 +33,6 @@ class CashCardApplicationTests {
                 .andExpect(jsonPath("$.owner").value("sarah1"));
     }
 
-    @WithMockUser(username="esuez5")
     @Test
     @DirtiesContext
     void shouldCreateANewCashCard() throws Exception {
@@ -49,7 +51,7 @@ class CashCardApplicationTests {
         this.mvc.perform(get(location))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.amount").value(250.00))
-                .andExpect(jsonPath("$.owner").value("esuez5"));
+                .andExpect(jsonPath("$.owner").value("sarah1"));
     }
 
     @Test
