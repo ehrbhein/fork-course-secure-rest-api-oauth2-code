@@ -30,6 +30,13 @@ class CashCardApplicationTests {
                 .andExpect(jsonPath("$.owner").value("sarah1"));
     }
 
+    @WithMockUser(username = "esuez5", authorities = {"SCOPE_cashcard:read"})
+    @Test
+    void shouldReturnForbiddenWhenCardBelongsToSomeoneElse() throws Exception {
+        this.mvc.perform(get("/cashcards/99"))
+                .andExpect(status().isForbidden());
+    }
+
     @WithMockUser(username="esuez5", authorities = {"SCOPE_cashcard:read", "SCOPE_cashcard:write"})
     @Test
     @DirtiesContext
@@ -52,6 +59,7 @@ class CashCardApplicationTests {
                 .andExpect(jsonPath("$.owner").value("esuez5"));
     }
 
+    @WithMockUser(username = "sarah1", authorities = {"SCOPE_cashcard:read"})
     @Test
     void shouldReturnAllCashCardsWhenListIsRequested() throws Exception {
         this.mvc.perform(get("/cashcards"))
