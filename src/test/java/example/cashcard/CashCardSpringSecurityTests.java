@@ -24,10 +24,14 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
 @SpringBootTest
 @AutoConfigureMockMvc
 public class CashCardSpringSecurityTests {
@@ -37,6 +41,26 @@ public class CashCardSpringSecurityTests {
 
 	@Autowired
 	private MockMvc mvc;
+
+	@Test
+	void shouldNotAllowTokensWithAnInvalidAudience() throws Exception {
+		String token = mint((claims) -> claims.audience(List.of("https://wrong")));
+		this.mvc.perform(get("/cashcards/1000").header("Authorization", "Bearer " + token))
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().string("WWW-Authenticate", containsString("aud claim is not valid")));
+
+	}
+
+	@Test
+	void shouldNotAllowTokensThatAreExpired() throws Exception {
+		String token = mint((claims) -> claims
+				.issuedAt(Instant.now().minusSeconds(3600))
+				.expiresAt(Instant.now().minusSeconds(3599))
+		);
+		this.mvc.perform(get("/cashcards/1000").header("Authorization", "Bearer " + token))
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().string("WWW-Authenticate", containsString("Jwt expired")));
+	}
 
 	private String mint() {
 		return mint(consumer -> {});
@@ -67,23 +91,17 @@ public class CashCardSpringSecurityTests {
 	}
 
 	@Test
-	void shouldRequireValidTokens() throws Exception {
-		String token = mint();
-
-		this.mvc.perform(get("/cashcards/100").header("Authorization", "Bearer " + token))
-				.andExpect(status().isUnauthorized())
-				.andExpect(header().string("WWW-Authenticate", containsString("aud claim is not valid")));
-	}
-
-	@Test
-	void shouldNotAllowTokensThatAreExpired() throws Exception {
-		String token = mint((claims) -> claims
+	void shouldShowAllTokenValidationErrors() throws Exception {
+		String expired = mint((claims) -> claims
+				.audience(List.of("https://wrong"))
 				.issuedAt(Instant.now().minusSeconds(3600))
 				.expiresAt(Instant.now().minusSeconds(3599))
 		);
-
-		this.mvc.perform(get("/cashcards/100").header("Authorization", "Bearer " + token))
+		this.mvc.perform(get("/cashcards").header("Authorization", "Bearer " + expired))
 				.andExpect(status().isUnauthorized())
-				.andExpect(header().string("WWW-Authenticate", containsString("Jwt expired")));
+				.andExpect(header().exists("WWW-Authenticate"))
+				.andExpect(jsonPath("$.errors..description").value(
+						containsInAnyOrder(containsString("Jwt expired"), containsString("aud claim is not valid"))));
 	}
+
 }
